@@ -1,2 +1,2 @@
-# mind-ease
+# Mind Ease
 Hackaton final - Postech Fiap
