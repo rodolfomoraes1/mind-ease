@@ -37,24 +37,31 @@ const MfeChart: React.FC<MfeChartProps> = ({
     // Limpar container
     containerRef.current.innerHTML = '';
 
+    const container = containerRef.current;
+
     // Criar elemento do gráfico
     const chart = document.createElement('mfe-bar-chart') as MfeBarChartElement;
 
-    // Configurar propriedades
+    // Setar atributos simples antes de conectar ao DOM
     if (title) chart.setAttribute('title', title);
-    if (values) chart.values = values;
-    if (labels.length > 0) chart.labels = labels;
-    if (datasets) chart.datasets = datasets;
-    if (data) chart.data = data;
-    if (colors.length > 0) chart.colors = colors;
-    if (Object.keys(options).length > 0) chart.options = options;
-    
     chart.setAttribute('height', typeof height === 'number' ? `${height}px` : height);
     chart.setAttribute('width', typeof width === 'number' ? `${width}px` : width);
 
-    // Adicionar ao DOM
-    containerRef.current.appendChild(chart);
-    onChartReady?.();
+    // Conectar ao DOM primeiro para que o Angular inicialize o elemento
+    container.appendChild(chart);
+
+    // Aguardar o custom element estar definido antes de setar propriedades complexas
+    // (evita NG0201 - Angular DI ainda não está pronto antes do connectedCallback)
+    customElements.whenDefined('mfe-bar-chart').then(() => {
+      if (!container.contains(chart)) return; // componente desmontado
+      if (values) chart.values = values;
+      if (labels.length > 0) chart.labels = labels;
+      if (datasets) chart.datasets = datasets;
+      if (data) chart.data = data;
+      if (colors.length > 0) chart.colors = colors;
+      if (Object.keys(options).length > 0) chart.options = options;
+      onChartReady?.();
+    });
 
   }, [loaded, title, values, labels, datasets, data, colors, options, height, width, onChartReady]);
 

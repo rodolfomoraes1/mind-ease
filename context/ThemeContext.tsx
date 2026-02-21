@@ -7,7 +7,6 @@ import { UserThemePreferences, UserThemeContextType } from '../theme/types';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
-// Preferências padrão
 const defaultPreferences: UserThemePreferences = {
   primaryColor: '#667EEA',
   mode: 'light',
@@ -30,7 +29,6 @@ export const DynamicThemeProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [preferences, setPreferences] = useState<UserThemePreferences>(defaultPreferences);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Carregar preferências do Firestore quando usuário logar
   useEffect(() => {
     const loadUserPreferences = async () => {
       if (!user) {
@@ -45,7 +43,6 @@ export const DynamicThemeProvider: React.FC<{ children: React.ReactNode }> = ({ 
         if (userPrefsDoc.exists()) {
           setPreferences(userPrefsDoc.data() as UserThemePreferences);
         } else {
-          // Criar documento com preferências padrão para novo usuário
           await setDoc(userPrefsRef, defaultPreferences);
           setPreferences(defaultPreferences);
         }

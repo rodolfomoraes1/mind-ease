@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import { Box, Divider, Typography, Link } from '@mui/material';
 import { motion } from 'framer-motion';
@@ -17,7 +17,7 @@ import {
   linkStyles,
 } from '../../components/shared/auth/styles';
 
-export default function Login() {
+function Login() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -28,7 +28,7 @@ export default function Login() {
     setError('');
     try {
       await loginWithEmail(email, password);
-      router.push('/');
+      router.push('/dashboard');
     } catch {
       setError('Email ou senha inválidos');
     } finally {
@@ -40,7 +40,7 @@ export default function Login() {
     setIsLoading(true);
     try {
       await loginWithGoogle();
-      router.push('/');
+      router.push('/dashboard');
     } catch {
       setError('Erro ao login com Google');
     } finally {
@@ -52,7 +52,7 @@ export default function Login() {
     setIsLoading(true);
     try {
       await loginWithFacebook();
-      router.push('/');
+      router.push('/dashboard');
     } catch {
       setError('Erro ao login com Facebook');
     } finally {
@@ -105,3 +105,7 @@ export default function Login() {
     </AuthLayout>
   );
 }
+
+Login.getLayout = (page: React.ReactElement) => page;
+
+export default Login;
