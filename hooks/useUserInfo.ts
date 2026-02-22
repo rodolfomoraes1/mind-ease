@@ -1,13 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './useAuth';
-import { getUserInfo } from '../services/userInfo';
-import type { UserInfo } from '../types/userInfo';
+import {
+  getUserInfo,
+  updateUserInfo as updateUserInfoService,
+  updateCognitivePreferences as updateCognitivePrefsService,
+} from '../services/userInfo';
+import type { UserInfo, CognitivePreferences } from '../types/userInfo';
 
 interface UseUserInfoResult {
   userInfo: UserInfo | null;
   loading: boolean;
   error: string | null;
   refetch: () => void;
+  /** Atualiza preferências cognitivas com optimistic update */
+  updateCognitivePrefs: (prefs: Partial<CognitivePreferences>) => Promise<void>;
+  /** Atualiza campos do perfil do usuário com optimistic update */
+  updateProfile: (updates: Partial<Omit<UserInfo, 'id'>>) => Promise<void>;
 }
 
 export function useUserInfo(): UseUserInfoResult {
@@ -28,7 +36,6 @@ export function useUserInfo(): UseUserInfoResult {
 
     try {
       const data = await getUserInfo(user.uid);
-      
       setUserInfo({
         ...data,
         name: user.displayName ?? data.name,
@@ -48,8 +55,43 @@ export function useUserInfo(): UseUserInfoResult {
   }, [fetchUserInfo, fetchCount]);
 
   const refetch = useCallback(() => {
-    setFetchCount(prev => prev + 1);
+    setFetchCount((prev) => prev + 1);
   }, []);
 
-  return { userInfo, loading, error, refetch };
+  const updateCognitivePrefs = useCallback(
+    async (prefs: Partial<CognitivePreferences>) => {
+      if (!userInfo) return;
+      const snapshot = userInfo;
+      // Optimistic update
+      setUserInfo({
+        ...userInfo,
+        cognitivePreferences: { ...userInfo.cognitivePreferences, ...prefs },
+      });
+      try {
+        await updateCognitivePrefsService(userInfo.id, prefs);
+      } catch (err) {
+        setUserInfo(snapshot); // rollback
+        throw err;
+      }
+    },
+    [userInfo],
+  );
+
+  const updateProfile = useCallback(
+    async (updates: Partial<Omit<UserInfo, 'id'>>) => {
+      if (!userInfo) return;
+      const snapshot = userInfo;
+      // Optimistic update
+      setUserInfo({ ...userInfo, ...updates });
+      try {
+        await updateUserInfoService(userInfo.id, updates);
+      } catch (err) {
+        setUserInfo(snapshot); // rollback
+        throw err;
+      }
+    },
+    [userInfo],
+  );
+
+  return { userInfo, loading, error, refetch, updateCognitivePrefs, updateProfile };
 }

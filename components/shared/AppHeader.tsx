@@ -14,13 +14,24 @@ import {
   Divider,
   ListItemIcon,
 } from '@mui/material';
-import { Logout, AccountCircle } from '@mui/icons-material';
+import { Logout, AccountCircle, Settings } from '@mui/icons-material';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../hooks/useAuth';
+import { TourButton } from './TourButton';
+import { useUserTheme } from '../../context/ThemeContext';
 
-const GRADIENT = 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)';
+/** Escurece levemente uma cor hex para o segundo ponto do gradiente */
+function darkenHex(hex: string, amount = 40): string {
+  const n = parseInt(hex.replace('#', ''), 16);
+  const r = Math.max(0, (n >> 16) - amount);
+  const g = Math.max(0, ((n >> 8) & 0xff) - amount);
+  const b = Math.max(0, (n & 0xff) - amount);
+  return `#${[r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+}
+
+const FALLBACK_GRADIENT = 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)';
 
 function getInitials(displayName: string | null | undefined): string {
   if (!displayName) return '?';
@@ -34,8 +45,12 @@ function getInitials(displayName: string | null | undefined): string {
 
 export const AppHeader = () => {
   const { user, loading, logout } = useAuth();
+  const { preferences } = useUserTheme();
   const router = useRouter();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  const primaryColor = preferences?.primaryColor ?? '#667EEA';
+  const GRADIENT = `linear-gradient(135deg, ${primaryColor} 0%, ${darkenHex(primaryColor)} 100%)`;
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -51,6 +66,7 @@ export const AppHeader = () => {
 
   return (
     <AppBar
+      id="tour-header"
       position="fixed"
       elevation={0}
       sx={{
@@ -109,6 +125,8 @@ export const AppHeader = () => {
               <Skeleton variant="circular" width={40} height={40} />
             ) : user ? (
               <>
+                <TourButton />
+
                 <Typography
                   variant="body2"
                   sx={{
@@ -196,6 +214,17 @@ export const AppHeader = () => {
                       <AccountCircle fontSize="small" />
                     </ListItemIcon>
                     Dashboard
+                  </MenuItem>
+
+                  <MenuItem
+                    component={Link}
+                    href="/settings"
+                    onClick={handleMenuClose}
+                  >
+                    <ListItemIcon>
+                      <Settings fontSize="small" />
+                    </ListItemIcon>
+                    Configurações
                   </MenuItem>
 
                   <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>

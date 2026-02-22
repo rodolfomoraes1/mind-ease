@@ -18,13 +18,13 @@ export const userInfoMock: UserInfo = {
   workRoutine: 'Segunda a Sexta, 9h–18h',
 
   cognitivePreferences: {
-    complexityLevel: 'moderate',
+    complexityLevel: 'full',
     focusMode: false,
     summaryMode: false,
-    contrastLevel: 'medium',
     spacingLevel: 'normal',
     fontSize: 'medium',
     cognitiveAlerts: true,
     animationsEnabled: true,
+    alertIntervalMinutes: 25,
   },
 };

@@ -1,46 +1,59 @@
-import { Card, CardContent, Typography, Box, Paper } from '@mui/material';
-import AssignmentIcon from '@mui/icons-material/Assignment';
+import React, { useState } from 'react';
+import { Card, CardContent, Typography, Box, Skeleton, Divider } from '@mui/material';
+import { TaskBoard } from '../tasks/TaskBoard';
+import { PomodoroTimer } from '../tasks/PomodoroTimer';
+import type { Task } from '../../types/task';
 
 interface TaskOrganizerProps {
   loading?: boolean;
 }
 
 export const TaskOrganizer: React.FC<TaskOrganizerProps> = ({ loading }) => {
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
+
   if (loading) {
     return (
-      <Card sx={{ mt: 4, p: 2, borderRadius: 2, height: 200 }}>
+      <Card sx={{ mt: 4, p: 2, borderRadius: 3 }}>
         <CardContent>
-          <Box sx={{ width: '100%', height: 150, bgcolor: '#f0f0f0', borderRadius: 2 }} />
+          <Skeleton variant="text" width={200} height={32} sx={{ mb: 2 }} />
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} variant="rounded" height={200} sx={{ borderRadius: 2 }} />
+            ))}
+          </Box>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card sx={{ mt: 4, p: 2, borderRadius: 2 }}>
+    <Card sx={{ mt: 4, p: 2, borderRadius: 3 }}>
       <CardContent>
         <Typography variant="h6" sx={{ mb: 2, borderBottom: '2px solid #667eea', pb: 1 }}>
           📋 Organizador de Tarefas
         </Typography>
-        
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            textAlign: 'center',
-            backgroundColor: '#f8f9ff',
-            borderRadius: 2,
-            border: '2px dashed #667eea',
-          }}
-        >
-          <AssignmentIcon sx={{ fontSize: 48, color: '#667eea', mb: 2, opacity: 0.5 }} />
-          <Typography variant="body1" color="text.secondary">
-            Em breve você poderá gerenciar suas tarefas aqui
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-            Funcionalidade em desenvolvimento
-          </Typography>
-        </Paper>
+
+        {/* Pomodoro Timer — aparece quando uma tarefa é selecionada */}
+        {activeTask && (
+          <>
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
+                ⏱️ Sessão ativa para:{' '}
+                <strong>{activeTask.title}</strong>
+              </Typography>
+              <PomodoroTimer
+                taskId={activeTask.id}
+                onPomodoroComplete={() => {
+                  // Pomodoro registrado automaticamente no hook
+                }}
+              />
+            </Box>
+            <Divider sx={{ my: 2 }} />
+          </>
+        )}
+
+        {/* Kanban Board */}
+        <TaskBoard onStartPomodoro={(task) => setActiveTask(task)} />
       </CardContent>
     </Card>
   );

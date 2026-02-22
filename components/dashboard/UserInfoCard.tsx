@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -10,12 +11,20 @@ import {
   Stack,
   Tooltip,
   Box,
+  Collapse,
+  IconButton,
 } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import PersonIcon from '@mui/icons-material/Person';
+import { useUserTheme } from '../../context/ThemeContext';
 import SchoolIcon from '@mui/icons-material/School';
 import WorkIcon from '@mui/icons-material/Work';
 import TuneIcon from '@mui/icons-material/Tune';
 import { useUserInfo } from '../../hooks/useUserInfo';
+import { useFocusMode } from './FocusModeWrapper';
+import { useSummaryMode } from './SummaryModeWrapper';
+import { CardTourButton } from '../shared/CardTourButton';
 import type { UserInfo } from '../../types/userInfo';
 
 const navigationProfileLabel: Record<UserInfo['navigationProfile'], string> = {
@@ -30,10 +39,9 @@ const navigationProfileColor: Record<UserInfo['navigationProfile'], 'success' | 
   advanced: 'info',
 };
 
-const contrastLabel: Record<string, string> = { low: 'Baixo', medium: 'Médio', high: 'Alto' };
 const spacingLabel: Record<string, string> = { compact: 'Compacto', normal: 'Normal', relaxed: 'Relaxado' };
 const fontSizeLabel: Record<string, string> = { small: 'Pequena', medium: 'Média', large: 'Grande' };
-const complexityLabel: Record<string, string> = { simple: 'Simples', moderate: 'Moderada', full: 'Completa' };
+const complexityLabel: Record<string, string> = { simple: 'Simples', full: 'Completa' };
 
 interface UserInfoCardProps {
   loading?: boolean;
@@ -41,8 +49,17 @@ interface UserInfoCardProps {
 
 export const UserInfoCard: React.FC<UserInfoCardProps> = ({ loading: forceLoading }) => {
   const { userInfo, loading: hookLoading, error } = useUserInfo();
+  const { preferences } = useUserTheme();
+  const { isFocusMode } = useFocusMode();
+  const { isSummaryMode } = useSummaryMode();
+  const [detailsExpanded, setDetailsExpanded] = useState(false);
 
+  const primaryColor = preferences.primaryColor ?? '#667EEA';
   const loading = forceLoading || hookLoading;
+
+  // Modos ativos (só se os dados já carregaram)
+  const isFocused = isFocusMode && !loading && !!userInfo;
+  const isSummarized = isSummaryMode && !loading && !!userInfo;
 
   if (error) {
     return (
@@ -62,17 +79,17 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({ loading: forceLoadin
 
   return (
     <Card
+      id="tour-user-card"
       elevation={0}
       sx={{
         mb: 4,
         borderRadius: 3,
-        border: '1px solid',
-        borderColor: 'divider',
-        background: 'linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%)',
+        border: `2px solid ${primaryColor}55`,
+        borderLeft: `4px solid ${primaryColor}`,
       }}
     >
       <CardContent sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: isFocused || isSummarized ? 0 : 3 }}>
           {loading ? (
             <Skeleton variant="circular" width={56} height={56} />
           ) : (
@@ -83,7 +100,7 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({ loading: forceLoadin
               {userInfo ? getInitials(userInfo.name) : <PersonIcon />}
             </Avatar>
           )}
-          <Box sx={{ flex: 1 }}>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
             {loading ? (
               <>
                 <Skeleton width={200} height={28} />
@@ -91,26 +108,62 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({ loading: forceLoadin
               </>
             ) : (
               <>
-                <Typography variant="h6" fontWeight={700} color="text.primary">
+                <Typography variant="h6" fontWeight={700} color="text.primary" noWrap>
                   Olá, {userInfo?.name}! 👋
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="text.secondary" noWrap>
                   {userInfo?.email}
                 </Typography>
               </>
             )}
           </Box>
-          {!loading && userInfo && (
+
+          {/* Modo Resumo: exibe chip de foco ativo no lugar do perfil */}
+          {isSummarized ? (
             <Chip
-              label={navigationProfileLabel[userInfo.navigationProfile]}
-              color={navigationProfileColor[userInfo.navigationProfile]}
+              label={userInfo?.cognitivePreferences?.focusMode ? '🎯 Foco ativo' : '💤 Foco inativo'}
+              color={userInfo?.cognitivePreferences?.focusMode ? 'primary' : 'default'}
               size="small"
-              sx={{ fontWeight: 600 }}
+              sx={{ fontWeight: 600, flexShrink: 0 }}
             />
+          ) : (
+            !loading && userInfo && (
+              <Chip
+                label={navigationProfileLabel[userInfo.navigationProfile]}
+                color={navigationProfileColor[userInfo.navigationProfile]}
+                size="small"
+                sx={{ fontWeight: 600, flexShrink: 0 }}
+              />
+            )
+          )}
+
+          {/* Botão de tour por card */}
+          <CardTourButton
+            cardType="userInfo"
+            title="👤 Seu Perfil"
+            description="Este card exibe suas informações pessoais, necessidades específicas e preferências cognitivas configuradas."
+            tips={[
+              'Personalize sua experiência em Configurações',
+              'Seu perfil de navegação afeta o Kanban e o tour',
+              'No Modo Foco este card fica compacto por padrão',
+            ]}
+          />
+
+          {/* Modo Foco: botão de expandir/colapsar */}
+          {isFocused && (
+            <IconButton
+              size="small"
+              onClick={() => setDetailsExpanded((v) => !v)}
+              sx={{ flexShrink: 0 }}
+            >
+              {detailsExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            </IconButton>
           )}
         </Box>
 
-        <Divider sx={{ mb: 3 }} />
+        {/* Detalhes: ocultos em resumo, colapsáveis em foco, sempre visíveis no modo normal */}
+        <Collapse in={!isSummarized && (!isFocused || detailsExpanded)}>
+          <Divider sx={{ mb: 3, mt: isFocused ? 2 : 0 }} />
 
         <Box
           sx={{
@@ -192,7 +245,6 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({ loading: forceLoadin
               <Stack spacing={0.5}>
                 {[
                   { label: 'Complexidade', value: complexityLabel[userInfo.cognitivePreferences?.complexityLevel] },
-                  { label: 'Contraste', value: contrastLabel[userInfo.cognitivePreferences?.contrastLevel] },
                   { label: 'Espaçamento', value: spacingLabel[userInfo.cognitivePreferences?.spacingLevel] },
                   { label: 'Fonte', value: fontSizeLabel[userInfo.cognitivePreferences?.fontSize] },
                 ].map(({ label, value }) => (
@@ -231,6 +283,7 @@ export const UserInfoCard: React.FC<UserInfoCardProps> = ({ loading: forceLoadin
             ) : null}
           </Box>
         </Box>
+        </Collapse>
       </CardContent>
     </Card>
   );

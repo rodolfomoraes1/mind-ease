@@ -5,12 +5,19 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/shared/AppLayout';
 import { UserInfoCard } from '@/components/dashboard/UserInfoCard';
 import { BackgroundAnimation } from '@/components/dashboard/BackgroundAnimation';
+import { FocusModeWrapper, HideInFocusMode } from '@/components/dashboard/FocusModeWrapper';
+import { SummaryModeWrapper } from '@/components/dashboard/SummaryModeWrapper';
+import { CognitiveAlert } from '@/components/shared/CognitiveAlert';
 import { RoutineCharts } from '@/components/dashboard/RoutineCharts';
 import { TaskOrganizer } from '@/components/dashboard/TaskOrganizer';
 import { useUserInfo } from '@/hooks/useUserInfo';
+import { useCognitiveFeatures } from '@/hooks/useCognitiveFeatures';
 
 function DashboardContent() {
   const { loading } = useUserInfo();
+  const { preferences } = useCognitiveFeatures();
+
+  const showCharts = preferences?.complexityLevel !== 'simple';
 
   return (
     <>
@@ -19,15 +26,32 @@ function DashboardContent() {
         <meta name="description" content="Dashboard personalizado com preferências cognitivas" />
       </Head>
 
-      <BackgroundAnimation />
+      {/* Background conectado à preferência de animações */}
+      <BackgroundAnimation disabled={!preferences?.animationsEnabled} />
 
-      <Container maxWidth="xl" sx={{ py: 4, position: 'relative', zIndex: 1 }}>
-        <UserInfoCard loading={loading} />
+      <FocusModeWrapper>
+        <SummaryModeWrapper>
+          <Container maxWidth="xl" sx={{ py: 4, position: 'relative', zIndex: 1 }}>
 
-        <RoutineCharts loading={loading} />
+            {/* Card de boas-vindas — sempre visível */}
+            <UserInfoCard loading={loading} />
 
-        <TaskOrganizer loading={loading} />
-      </Container>
+            {/* Seções ocultadas em Focus Mode ou Complexidade Simples */}
+            {showCharts && (
+              <HideInFocusMode>
+                <RoutineCharts loading={loading} />
+              </HideInFocusMode>
+            )}
+
+            {/* Organizador de tarefas — sempre visível */}
+            <TaskOrganizer loading={loading} />
+
+          </Container>
+        </SummaryModeWrapper>
+      </FocusModeWrapper>
+
+      {/* Alertas cognitivos não-intrusivos */}
+      <CognitiveAlert />
     </>
   );
 }

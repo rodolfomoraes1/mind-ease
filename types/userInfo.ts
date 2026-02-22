@@ -1,12 +1,14 @@
 export interface CognitivePreferences {
-  complexityLevel: 'simple' | 'moderate' | 'full';
+  /** 'simple' = sem gráficos; 'full' = exibe tudo */
+  complexityLevel: 'simple' | 'full';
   focusMode: boolean;
   summaryMode: boolean;
-  contrastLevel: 'low' | 'medium' | 'high';
   spacingLevel: 'compact' | 'normal' | 'relaxed';
   fontSize: 'small' | 'medium' | 'large';
   cognitiveAlerts: boolean;
   animationsEnabled: boolean;
+  /** Intervalo em minutos para o 1º alerta. O 2º dispara em 2× esse valor. Padrão: 25 */
+  alertIntervalMinutes: number;
 }
 
 export interface UserInfo {
@@ -22,12 +24,12 @@ export interface UserInfo {
 }
 
 export const defaultCognitivePreferences: CognitivePreferences = {
-  complexityLevel: 'moderate',
+  complexityLevel: 'full',
   focusMode: false,
   summaryMode: false,
-  contrastLevel: 'medium',
   spacingLevel: 'normal',
   fontSize: 'medium',
   cognitiveAlerts: true,
   animationsEnabled: true,
+  alertIntervalMinutes: 25,
 };

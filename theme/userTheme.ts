@@ -1,11 +1,18 @@
 import { createTheme, Theme } from '@mui/material/styles';
-import { UserThemePreferences, FontSize } from './types';
+import { UserThemePreferences, FontSize, SpacingLevel } from './types';
 
 // Mapeamento de tamanhos de fonte
 const fontSizeMap: Record<FontSize, number> = {
   small: 14,
   medium: 16,
   large: 18,
+};
+
+// Mapeamento de espaçamento → valor base do MUI (px)
+const spacingMap: Record<SpacingLevel, number> = {
+  compact: 4,
+  normal: 8,
+  relaxed: 12,
 };
 
 // Mapeamento de modos
@@ -28,11 +35,13 @@ const modeMap = {
 };
 
 export const createUserTheme = (preferences: UserThemePreferences): Theme => {
-  const { primaryColor, mode, fontSize, secondaryColor, borderRadius = 8 } = preferences;
+  const { primaryColor, mode, fontSize, secondaryColor, borderRadius = 8, spacingLevel = 'normal' } = preferences;
+  const spacingValue = spacingMap[spacingLevel];
   
   const modeColors = modeMap[mode];
   
   return createTheme({
+    spacing: spacingValue,
     palette: {
       mode: mode === 'dark' || mode === 'opaque' ? 'dark' : 'light',
       primary: {

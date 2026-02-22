@@ -2,6 +2,7 @@ import { DynamicThemeProvider } from '../context/ThemeContext';
 import { AuthProvider } from '../context/AuthContext';
 import { AppLayout } from '../components/shared/AppLayout';
 import CssBaseline from '@mui/material/CssBaseline';
+import 'driver.js/dist/driver.css';
 import type { AppProps } from 'next/app';
 import type { NextPage } from 'next';
 import type { ReactElement, ReactNode } from 'react';
