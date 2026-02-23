@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Card, CardContent, Typography, Box, Skeleton, Divider } from '@mui/material';
+import { Card, CardContent, Typography, Box, Skeleton, Divider, IconButton, Tooltip } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import { TaskBoard } from '../tasks/TaskBoard';
 import { PomodoroTimer } from '../tasks/PomodoroTimer';
+import { useTasksContext } from '../../context/TasksContext';
 import type { Task } from '../../types/task';
 
 interface TaskOrganizerProps {
@@ -10,6 +12,7 @@ interface TaskOrganizerProps {
 
 export const TaskOrganizer: React.FC<TaskOrganizerProps> = ({ loading }) => {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const { addCompletedPomodoro } = useTasksContext();
 
   if (loading) {
     return (
@@ -37,14 +40,24 @@ export const TaskOrganizer: React.FC<TaskOrganizerProps> = ({ loading }) => {
         {activeTask && (
           <>
             <Box sx={{ mb: 2 }}>
-              <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: 'block' }}>
-                ⏱️ Sessão ativa para:{' '}
-                <strong>{activeTask.title}</strong>
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+                <Typography variant="caption" color="text.secondary">
+                  ⏱️ Sessão ativa para: <strong>{activeTask.title}</strong>
+                </Typography>
+                <Tooltip title="Fechar timer">
+                  <IconButton
+                    size="small"
+                    onClick={() => setActiveTask(null)}
+                    sx={{ ml: 1 }}
+                  >
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
               <PomodoroTimer
                 taskId={activeTask.id}
                 onPomodoroComplete={() => {
-                  // Pomodoro registrado automaticamente no hook
+                  addCompletedPomodoro(activeTask.id);
                 }}
               />
             </Box>

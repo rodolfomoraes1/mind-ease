@@ -12,6 +12,7 @@ import { RoutineCharts } from '@/components/dashboard/RoutineCharts';
 import { TaskOrganizer } from '@/components/dashboard/TaskOrganizer';
 import { useUserInfo } from '@/hooks/useUserInfo';
 import { useCognitiveFeatures } from '@/hooks/useCognitiveFeatures';
+import { TasksProvider } from '@/context/TasksContext';
 
 function DashboardContent() {
   const { loading } = useUserInfo();
@@ -26,31 +27,28 @@ function DashboardContent() {
         <meta name="description" content="Dashboard personalizado com preferências cognitivas" />
       </Head>
 
-      {/* Background conectado à preferência de animações */}
       <BackgroundAnimation disabled={!preferences?.animationsEnabled} />
 
       <FocusModeWrapper>
         <SummaryModeWrapper>
           <Container maxWidth="xl" sx={{ py: 4, position: 'relative', zIndex: 1 }}>
 
-            {/* Card de boas-vindas — sempre visível */}
             <UserInfoCard loading={loading} />
 
-            {/* Seções ocultadas em Focus Mode ou Complexidade Simples */}
             {showCharts && (
               <HideInFocusMode>
                 <RoutineCharts loading={loading} />
               </HideInFocusMode>
             )}
 
-            {/* Organizador de tarefas — sempre visível */}
-            <TaskOrganizer loading={loading} />
+            <TasksProvider>
+              <TaskOrganizer loading={loading} />
+            </TasksProvider>
 
           </Container>
         </SummaryModeWrapper>
       </FocusModeWrapper>
 
-      {/* Alertas cognitivos não-intrusivos */}
       <CognitiveAlert />
     </>
   );
