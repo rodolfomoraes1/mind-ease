@@ -21,7 +21,7 @@ function Login() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { loginWithEmail, loginWithGoogle, loginWithFacebook } = useAuth();
+  const { loginWithEmail, loginWithGoogle } = useAuth();
 
   const handleEmailLogin = async (email: string, password: string) => {
     setIsLoading(true);
@@ -43,18 +43,6 @@ function Login() {
       router.push('/dashboard');
     } catch {
       setError('Erro ao login com Google');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleFacebookLogin = async () => {
-    setIsLoading(true);
-    try {
-      await loginWithFacebook();
-      router.push('/dashboard');
-    } catch {
-      setError('Erro ao login com Facebook');
     } finally {
       setIsLoading(false);
     }
@@ -86,7 +74,6 @@ function Login() {
 
           <SocialButtons
             onGoogleClick={handleGoogleLogin}
-            onFacebookClick={handleFacebookLogin}
             isLoading={isLoading}
           />
 

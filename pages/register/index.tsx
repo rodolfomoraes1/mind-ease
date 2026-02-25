@@ -21,7 +21,7 @@ function Register() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { registerWithEmail, loginWithGoogle, loginWithFacebook } = useAuth();
+  const { registerWithEmail, loginWithGoogle } = useAuth();
 
   const handleEmailRegister = async (name: string, email: string, password: string) => {
     setIsLoading(true);
@@ -43,18 +43,6 @@ function Register() {
       router.push('/dashboard');
     } catch {
       setError('Erro ao entrar com Google');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleFacebookLogin = async () => {
-    setIsLoading(true);
-    try {
-      await loginWithFacebook();
-      router.push('/dashboard');
-    } catch {
-      setError('Erro ao entrar com Facebook');
     } finally {
       setIsLoading(false);
     }
@@ -86,7 +74,6 @@ function Register() {
 
           <SocialButtons
             onGoogleClick={handleGoogleLogin}
-            onFacebookClick={handleFacebookLogin}
             isLoading={isLoading}
           />
 

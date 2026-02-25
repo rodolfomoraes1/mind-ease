@@ -4,7 +4,6 @@ import {
   createUserWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
-  FacebookAuthProvider,
   signOut,
   onAuthStateChanged,
   User,
@@ -44,7 +43,6 @@ interface AuthContextValue {
   loginWithEmail: (email: string, password: string) => Promise<void>;
   registerWithEmail: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
-  loginWithFacebook: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -87,15 +85,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const loginWithFacebook = useCallback(async () => {
-    try {
-      const provider = new FacebookAuthProvider();
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      throw new Error(mapFirebaseError(error as AuthError));
-    }
-  }, []);
-
   const logout = useCallback(async () => {
     await signOut(auth);
   }, []);
@@ -108,7 +97,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginWithEmail,
         registerWithEmail,
         loginWithGoogle,
-        loginWithFacebook,
         logout,
       }}
     >
