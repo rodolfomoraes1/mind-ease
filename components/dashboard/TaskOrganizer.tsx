@@ -10,7 +10,7 @@ interface TaskOrganizerProps {
   loading?: boolean;
 }
 
-export const TaskOrganizer: React.FC<TaskOrganizerProps> = ({ loading }) => {
+export const TaskOrganizer = React.memo<TaskOrganizerProps>(function TaskOrganizer({ loading }) {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const { addCompletedPomodoro } = useTasksContext();
 
@@ -36,7 +36,6 @@ export const TaskOrganizer: React.FC<TaskOrganizerProps> = ({ loading }) => {
           📋 Organizador de Tarefas
         </Typography>
 
-        {/* Pomodoro Timer — aparece quando uma tarefa é selecionada */}
         {activeTask && (
           <>
             <Box sx={{ mb: 2 }}>
@@ -70,4 +69,4 @@ export const TaskOrganizer: React.FC<TaskOrganizerProps> = ({ loading }) => {
       </CardContent>
     </Card>
   );
-};
+});

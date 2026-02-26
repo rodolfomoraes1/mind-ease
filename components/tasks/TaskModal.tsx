@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -18,6 +18,8 @@ import {
 import type { Task, CognitiveLoad, TaskStatus } from '../../types/task';
 import { COGNITIVE_LOAD_COLORS, COGNITIVE_LOAD_LABELS } from '../../types/task';
 import { TaskChecklist } from './TaskChecklist';
+import { useDebounce } from '../../hooks/useDebounce';
+import { sanitizeText } from '../../utils/validation';
 
 const DEFAULT_TAGS = ['estudo', 'trabalho', 'projeto', 'pesquisa', 'revisão', 'dev'];
 
@@ -49,9 +51,6 @@ interface TaskModalProps {
   mode?: 'create' | 'edit';
 }
 
-/**
- * Modal de criação e edição de tarefas.
- */
 export const TaskModal: React.FC<TaskModalProps> = ({
   open,
   onClose,
@@ -62,6 +61,17 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   const [form, setForm] = useState<TaskFormData>(defaultForm);
   const [saving, setSaving] = useState(false);
   const [tagInput, setTagInput] = useState('');
+
+  const debouncedTagInput = useDebounce(tagInput, 300);
+
+  const addTag = useCallback((tag: string) => {
+    const t = tag.trim().toLowerCase();
+    if (!t || form.tags.includes(t)) return;
+    set('tags', [...form.tags, t]);
+    setTagInput('');
+  }, [form.tags]);
+
+  const removeTag = useCallback((tag: string) => set('tags', form.tags.filter((t) => t !== tag)), [form.tags]);
 
   useEffect(() => {
     if (open) {
@@ -84,20 +94,15 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   const set = <K extends keyof TaskFormData>(key: K, value: TaskFormData[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  const addTag = (tag: string) => {
-    const t = tag.trim().toLowerCase();
-    if (!t || form.tags.includes(t)) return;
-    set('tags', [...form.tags, t]);
-    setTagInput('');
-  };
-
-  const removeTag = (tag: string) => set('tags', form.tags.filter((t) => t !== tag));
-
   const handleSubmit = async () => {
     if (!form.title.trim()) return;
     setSaving(true);
     try {
-      await onSubmit(form);
+      await onSubmit({
+        ...form,
+        title: sanitizeText(form.title),
+        description: sanitizeText(form.description),
+      });
       onClose();
     } finally {
       setSaving(false);
@@ -118,7 +123,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({
 
       <DialogContent sx={{ pt: 1 }}>
         <Stack spacing={2.5}>
-          {/* Título */}
           <TextField
             label="Título *"
             value={form.title}
@@ -129,7 +133,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             placeholder="O que precisa ser feito?"
           />
 
-          {/* Descrição */}
           <TextField
             label="Descrição"
             value={form.description}
@@ -140,7 +143,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             placeholder="Contexto adicional (opcional)"
           />
 
-          {/* Carga cognitiva */}
           <Box>
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
               Carga cognitiva
@@ -171,7 +173,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             </ToggleButtonGroup>
           </Box>
 
-          {/* Pomodoros estimados */}
           <Box>
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
               Pomodoros estimados
@@ -193,7 +194,6 @@ export const TaskModal: React.FC<TaskModalProps> = ({
             </Typography>
           </Box>
 
-          {/* Tags */}
           <Box>
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
               Tags
@@ -218,17 +218,16 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput); }
+                  if (e.key === 'Enter') { e.preventDefault(); addTag(debouncedTagInput); }
                 }}
                 sx={{ flex: 1 }}
               />
-              <Button size="small" variant="outlined" onClick={() => addTag(tagInput)}>
+              <Button size="small" variant="outlined" onClick={() => addTag(debouncedTagInput)}>
                 +
               </Button>
             </Box>
           </Box>
 
-          {/* Subtarefas */}
           <Box>
             <Divider sx={{ mb: 2 }} />
             <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>

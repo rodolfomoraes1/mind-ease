@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Box,
   TextField,
@@ -11,6 +11,7 @@ import {
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formStyles, inputLabelStyles, inputStyles, primaryButtonStyles } from './styles';
+import { validateEmail } from '../../../utils/validation';
 
 interface LoginFormProps {
   onSubmit: (email: string, password: string) => Promise<void>;
@@ -22,10 +23,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading, error
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
+
+  const emailError = useMemo(() => (emailTouched ? validateEmail(email) : null), [email, emailTouched]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(email, password);
+    setEmailTouched(true);
+    if (validateEmail(email)) return;
+    await onSubmit(email.trim().toLowerCase(), password);
   };
 
   return (
@@ -50,6 +56,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, isLoading, error
         type="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
+        onBlur={() => setEmailTouched(true)}
+        error={!!emailError}
+        helperText={emailError}
         required
         variant="outlined"
         InputLabelProps={{ sx: inputLabelStyles }}

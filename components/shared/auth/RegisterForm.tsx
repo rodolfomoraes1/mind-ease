@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Box,
   TextField,
@@ -7,10 +7,19 @@ import {
   IconButton,
   CircularProgress,
   Alert,
+  LinearProgress,
+  Typography,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formStyles, inputLabelStyles, inputStyles, primaryButtonStyles } from './styles';
+import {
+  validateEmail,
+  validatePassword,
+  validateRequired,
+  getPasswordStrength,
+  sanitizeName,
+} from '../../../utils/validation';
 
 interface RegisterFormProps {
   onSubmit: (name: string, email: string, password: string) => Promise<void>;
@@ -25,17 +34,36 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit, isLoading,
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState('');
+  const [touched, setTouched] = useState({ name: false, email: false, password: false });
+
+  const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
+
+  const fieldErrors = useMemo(() => ({
+    name: touched.name ? validateRequired(name, 'Nome') : null,
+    email: touched.email ? validateEmail(email) : null,
+    password: touched.password ? validatePassword(password) : null,
+  }), [name, email, password, touched]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError('');
+    setTouched({ name: true, email: true, password: true });
+
+    const nameErr = validateRequired(name, 'Nome');
+    const emailErr = validateEmail(email);
+    const passwordErr = validatePassword(password);
+
+    if (nameErr || emailErr || passwordErr) {
+      setLocalError(nameErr ?? emailErr ?? passwordErr ?? 'Verifique os campos');
+      return;
+    }
 
     if (password !== confirmPassword) {
       setLocalError('As senhas não coincidem');
       return;
     }
 
-    await onSubmit(name, email, password);
+    await onSubmit(sanitizeName(name), email.trim().toLowerCase(), password);
   };
 
   const displayError = localError || error;
@@ -62,6 +90,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit, isLoading,
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
+        onBlur={() => setTouched((p) => ({ ...p, name: true }))}
+        error={!!fieldErrors.name}
+        helperText={fieldErrors.name}
         required
         variant="outlined"
         InputLabelProps={{ sx: inputLabelStyles }}
@@ -74,6 +105,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit, isLoading,
         type="email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
+        onBlur={() => setTouched((p) => ({ ...p, email: true }))}
+        error={!!fieldErrors.email}
+        helperText={fieldErrors.email}
         required
         variant="outlined"
         InputLabelProps={{ sx: inputLabelStyles }}
@@ -86,6 +120,9 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit, isLoading,
         type={showPassword ? 'text' : 'password'}
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+        onBlur={() => setTouched((p) => ({ ...p, password: true }))}
+        error={!!fieldErrors.password}
+        helperText={fieldErrors.password}
         required
         variant="outlined"
         InputLabelProps={{ sx: inputLabelStyles }}
@@ -105,12 +142,33 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit, isLoading,
         }}
       />
 
+      {password.length > 0 && (
+        <Box sx={{ mt: -1 }}>
+          <LinearProgress
+            variant="determinate"
+            value={(passwordStrength.score / 5) * 100}
+            sx={{
+              height: 4,
+              borderRadius: 2,
+              bgcolor: 'rgba(255,255,255,0.1)',
+              '& .MuiLinearProgress-bar': { bgcolor: passwordStrength.color, transition: 'all 0.3s' },
+            }}
+          />
+          <Typography variant="caption" sx={{ color: passwordStrength.color, mt: 0.25, display: 'block' }}>
+            Força da senha: {passwordStrength.label}
+            {passwordStrength.suggestions.length > 0 && ` — ${passwordStrength.suggestions[0]}`}
+          </Typography>
+        </Box>
+      )}
+
       <TextField
         fullWidth
         label="Confirmar senha"
         type={showPassword ? 'text' : 'password'}
         value={confirmPassword}
         onChange={(e) => setConfirmPassword(e.target.value)}
+        error={confirmPassword.length > 0 && confirmPassword !== password}
+        helperText={confirmPassword.length > 0 && confirmPassword !== password ? 'As senhas não coincidem' : undefined}
         required
         variant="outlined"
         InputLabelProps={{ sx: inputLabelStyles }}

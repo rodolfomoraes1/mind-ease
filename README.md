@@ -71,7 +71,7 @@ Armazenar preferências como:
 ## Checklist técnico
 - [ ] Comunicação entre microapps (se aplicável)
 - [ ] Arquitetura de microfrontend definida (se aplicável)
-- [ ] Design System (tokens, tipografia, cores, espaçamentos)
+- [x] Design System (tokens, tipografia, cores, espaçamentos)
 - [ ] Observabilidade: logs estruturados e monitoramento de erros
 - [x] Separação clara entre módulos (painel, tarefas, perfil)
 - [x] Domínio isolado (Clean Architecture)
@@ -79,7 +79,7 @@ Armazenar preferências como:
 - [x] Acessibilidade cognitiva implementada
 - [x] State management com Context API (ou equivalente)
 - [x] Testes unitários, integração
-- [ ] GitHub Actions para CI/CD
-- [ ] Segurança: hash de senhas com bcrypt, validação de entrada e armazenamento seguro
-- [ ] Eficiência: memoização (React.memo), hooks de otimização (useMemo/useCallback), lazy loading e code splitting
-- [ ] Performance: cache local, debounce/throttle em inputs, compressão de assets
+- [x] GitHub Actions para CI/CD
+- [x] Segurança: hash de senhas com bcrypt, validação de entrada e armazenamento seguro
+- [x] Eficiência: memoização (React.memo), hooks de otimização (useMemo/useCallback), lazy loading e code splitting
+- [x] Performance: cache local, debounce/throttle em inputs, compressão de assets

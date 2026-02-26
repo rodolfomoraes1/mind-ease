@@ -1,18 +1,32 @@
 import React from 'react';
+import dynamic from 'next/dynamic';
 import Head from 'next/head';
-import { Container } from '@mui/material';
+import { Container, Skeleton } from '@mui/material';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/shared/AppLayout';
-import { UserInfoCard } from '@/components/dashboard/UserInfoCard';
 import { BackgroundAnimation } from '@/components/dashboard/BackgroundAnimation';
 import { FocusModeWrapper, HideInFocusMode } from '@/components/dashboard/FocusModeWrapper';
 import { SummaryModeWrapper } from '@/components/dashboard/SummaryModeWrapper';
 import { CognitiveAlert } from '@/components/shared/CognitiveAlert';
-import { RoutineCharts } from '@/components/dashboard/RoutineCharts';
-import { TaskOrganizer } from '@/components/dashboard/TaskOrganizer';
+import { TasksProvider } from '@/context/TasksContext';
 import { useUserInfo } from '@/hooks/useUserInfo';
 import { useCognitiveFeatures } from '@/hooks/useCognitiveFeatures';
-import { TasksProvider } from '@/context/TasksContext';
+
+// Lazy loading com code splitting — carregados apenas quando necessário
+const UserInfoCard = dynamic(
+  () => import('@/components/dashboard/UserInfoCard').then((m) => ({ default: m.UserInfoCard })),
+  { loading: () => <Skeleton variant="rounded" height={120} sx={{ mb: 2, borderRadius: 3 }} /> },
+);
+
+const RoutineCharts = dynamic(
+  () => import('@/components/dashboard/RoutineCharts').then((m) => ({ default: m.RoutineCharts })),
+  { loading: () => <Skeleton variant="rounded" height={200} sx={{ mb: 2, borderRadius: 3 }} /> },
+);
+
+const TaskOrganizer = dynamic(
+  () => import('@/components/dashboard/TaskOrganizer').then((m) => ({ default: m.TaskOrganizer })),
+  { loading: () => <Skeleton variant="rounded" height={300} sx={{ borderRadius: 3 }} /> },
+);
 
 function DashboardContent() {
   const { loading } = useUserInfo();

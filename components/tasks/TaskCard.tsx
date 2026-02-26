@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -41,12 +41,11 @@ interface TaskCardProps {
   onDelete: (id: string) => void;
   onMove?: (id: string, status: TaskStatus) => void;
   onSubtasksChange?: (id: string, subtasks: Task['subtasks']) => void;
-  /** Callback para iniciar Pomodoro nessa tarefa */
   onStartPomodoro?: (task: Task) => void;
   dragging?: boolean;
 }
 
-export const TaskCard: React.FC<TaskCardProps> = ({
+export const TaskCard = React.memo<TaskCardProps>(function TaskCard({
   task,
   onEdit,
   onDelete,
@@ -54,17 +53,35 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   onSubtasksChange,
   onStartPomodoro,
   dragging = false,
-}) => {
+}) {
   const { isSummaryMode: summaryMode } = useSummaryMode();
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [expanded, setExpanded] = useState(false);
 
-  const loadColor = COGNITIVE_LOAD_COLORS[task.cognitiveLoad];
-  const pomodoroProgress = task.estimatedPomodoros > 0
-    ? Math.min((task.completedPomodoros / task.estimatedPomodoros) * 100, 100)
-    : 0;
+  const loadColor = useMemo(() => COGNITIVE_LOAD_COLORS[task.cognitiveLoad], [task.cognitiveLoad]);
+  const pomodoroProgress = useMemo(
+    () =>
+      task.estimatedPomodoros > 0
+        ? Math.min((task.completedPomodoros / task.estimatedPomodoros) * 100, 100)
+        : 0,
+    [task.estimatedPomodoros, task.completedPomodoros],
+  );
   const hasSubtasks = task.subtasks.length > 0;
-  const completedSubtasks = task.subtasks.filter((s) => s.completed).length;
+  const completedSubtasks = useMemo(
+    () => task.subtasks.filter((s) => s.completed).length,
+    [task.subtasks],
+  );
+
+  const handleOpenMenu = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    setMenuAnchor(e.currentTarget);
+  }, []);
+
+  const handleCloseMenu = useCallback(() => setMenuAnchor(null), []);
+  const handleToggleExpand = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpanded((v) => !v);
+  }, []);
 
   return (
     <Card
@@ -80,7 +97,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         opacity: task.status === 'done' ? 0.75 : 1,
       }}
     >
-      {/* Indicador de carga cognitiva no topo */}
       <LinearProgress
         variant="determinate"
         value={pomodoroProgress}
@@ -93,7 +109,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       />
 
       <CardContent sx={{ pt: 1.5, pb: '12px !important', px: 2 }}>
-        {/* Header: título + menu */}
         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
           <Typography
             variant="body1"
@@ -110,14 +125,13 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           </Typography>
           <IconButton
             size="small"
-            onClick={(e) => { e.stopPropagation(); setMenuAnchor(e.currentTarget); }}
+            onClick={handleOpenMenu}
             sx={{ mt: -0.5, mr: -0.5, flexShrink: 0 }}
           >
             <MoreVertIcon fontSize="small" />
           </IconButton>
         </Box>
 
-        {/* Descrição (oculta no modo resumo) */}
         {!summaryMode && task.description && (
           <Typography
             variant="caption"
@@ -134,7 +148,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           </Typography>
         )}
 
-        {/* Tags */}
         {task.tags.length > 0 && !summaryMode && (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
             {task.tags.slice(0, 3).map((tag) => (
@@ -146,7 +159,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           </Box>
         )}
 
-        {/* Footer: carga cognitiva + pomodoros */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 1.5 }}>
           <Chip
             label={COGNITIVE_LOAD_LABELS[task.cognitiveLoad]}
@@ -184,7 +196,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             {hasSubtasks && (
               <IconButton
                 size="small"
-                onClick={(e) => { e.stopPropagation(); setExpanded((v) => !v); }}
+                onClick={handleToggleExpand}
                 sx={{ p: 0.25 }}
               >
                 {expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
@@ -193,7 +205,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           </Stack>
         </Box>
 
-        {/* Subtarefas expansível */}
         {hasSubtasks && (
           <Collapse in={expanded} timeout="auto">
             <Divider sx={{ my: 1 }} />
@@ -206,14 +217,13 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         )}
       </CardContent>
 
-      {/* Kebab Menu */}
       <Menu
         anchorEl={menuAnchor}
         open={Boolean(menuAnchor)}
-        onClose={() => setMenuAnchor(null)}
+        onClose={handleCloseMenu}
         PaperProps={{ sx: { borderRadius: 2, minWidth: 180 } }}
       >
-        <MenuItem onClick={() => { onEdit(task); setMenuAnchor(null); }}>
+        <MenuItem onClick={() => { onEdit(task); handleCloseMenu(); }}>
           ✏️ Editar
         </MenuItem>
 
@@ -221,7 +231,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           MOVE_OPTIONS.filter((opt) => opt.status !== task.status).map((opt) => (
             <MenuItem
               key={opt.status}
-              onClick={() => { onMove(task.id, opt.status); setMenuAnchor(null); }}
+              onClick={() => { onMove(task.id, opt.status); handleCloseMenu(); }}
             >
               {opt.label}
             </MenuItem>
@@ -230,7 +240,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
         <Divider />
         <MenuItem
-          onClick={() => { onDelete(task.id); setMenuAnchor(null); }}
+          onClick={() => { onDelete(task.id); handleCloseMenu(); }}
           sx={{ color: 'error.main' }}
         >
           🗑️ Excluir
@@ -238,4 +248,4 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       </Menu>
     </Card>
   );
-};
+});

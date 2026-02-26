@@ -87,7 +87,7 @@ interface SortableTaskCardProps {
   onStartPomodoro: (task: Task) => void;
 }
 
-const SortableTaskCard: React.FC<SortableTaskCardProps> = ({ task, ...rest }) => {
+const SortableTaskCard = React.memo<SortableTaskCardProps>(function SortableTaskCard({ task, ...rest }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
   });
@@ -106,7 +106,7 @@ const SortableTaskCard: React.FC<SortableTaskCardProps> = ({ task, ...rest }) =>
       <TaskCard task={task} dragging={false} {...rest} />
     </Box>
   );
-};
+});
 
 const DroppableColumnArea: React.FC<{
   id: string;
@@ -141,10 +141,10 @@ interface ColumnWrapperProps {
   onStartPomodoro: (task: Task) => void;
 }
 
-const ColumnWrapper: React.FC<ColumnWrapperProps> = ({
+const ColumnWrapper = React.memo<ColumnWrapperProps>(function ColumnWrapper({
   id, label, color, columnTasks, isDoingFull, loading,
   onEdit, onDelete, onMove, onSubtasksChange, onStartPomodoro,
-}) => {
+}) {
   const { setNodeRef, isOver } = useDroppable({ id });
 
   return (
@@ -221,7 +221,7 @@ const ColumnWrapper: React.FC<ColumnWrapperProps> = ({
       </DroppableColumnArea>
     </Paper>
   );
-};
+});
 
 interface TaskBoardProps {
   onStartPomodoro?: (task: Task) => void;

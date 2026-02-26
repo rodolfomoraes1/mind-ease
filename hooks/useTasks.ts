@@ -12,21 +12,52 @@ import {
 } from '../services/task';
 import type { Task, TaskStatus, Subtask } from '../types/task';
 
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+
+function cacheKey(uid: string) {
+  return `mind-ease:tasks:${uid}`;
+}
+
+function loadFromCache(uid: string): Task[] | null {
+  try {
+    const raw = localStorage.getItem(cacheKey(uid));
+    if (!raw) return null;
+    const { data, timestamp } = JSON.parse(raw) as { data: Task[]; timestamp: number };
+    if (Date.now() - timestamp > CACHE_TTL_MS) return null;
+    return (data as Task[]).map((t) => ({
+      ...t,
+      createdAt: t.createdAt ? new Date(t.createdAt as unknown as string) : t.createdAt,
+    }));
+  } catch {
+    return null;
+  }
+}
+
+function saveToCache(uid: string, tasks: Task[]) {
+  try {
+    localStorage.setItem(cacheKey(uid), JSON.stringify({ data: tasks, timestamp: Date.now() }));
+  } catch {
+    // NOOP
+  }
+}
+
+function clearCache(uid: string) {
+  try {
+    localStorage.removeItem(cacheKey(uid));
+  } catch {
+    // NOOP
+  }
+}
+
 interface UseTasksResult {
   tasks: Task[];
   loading: boolean;
   error: string | null;
-  /** Adiciona nova tarefa com optimistic update */
   addTask: (task: Omit<Task, 'id' | 'userId' | 'createdAt' | 'completedPomodoros'>) => Promise<void>;
-  /** Move tarefa para nova coluna */
   moveTaskTo: (taskId: string, newStatus: TaskStatus) => Promise<void>;
-  /** Atualiza campos de uma tarefa */
   editTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
-  /** Remove tarefa */
   removeTask: (taskId: string) => Promise<void>;
-  /** Incrementa pomodoro completado */
   addCompletedPomodoro: (taskId: string) => Promise<void>;
-  /** Atualiza lista de subtarefas */
   setSubtasks: (taskId: string, subtasks: Subtask[]) => Promise<void>;
   refetch: () => void;
 }
@@ -44,11 +75,20 @@ export function useTasks(): UseTasksResult {
       return;
     }
     let cancelled = false;
+
+    const cached = loadFromCache(user.uid);
+    if (cached) setTasks(cached);
+
     setLoading(true);
     setError(null);
 
     getUserTasks(user.uid)
-      .then((data) => { if (!cancelled) setTasks(data); })
+      .then((data) => {
+        if (!cancelled) {
+          setTasks(data);
+          saveToCache(user.uid, data);
+        }
+      })
       .catch(() => { if (!cancelled) setError('Não foi possível carregar as tarefas.'); })
       .finally(() => { if (!cancelled) setLoading(false); });
 
@@ -68,12 +108,24 @@ export function useTasks(): UseTasksResult {
         createdAt: new Date(),
         order: tasks.filter((t) => t.status === task.status).length,
       };
-      setTasks((prev) => [...prev, optimistic]);
+      setTasks((prev) => {
+        const next = [...prev, optimistic];
+        saveToCache(user.uid, next);
+        return next;
+      });
       try {
         const created = await createTask(user.uid, task);
-        setTasks((prev) => prev.map((t) => (t.id === optimistic.id ? created : t)));
+        setTasks((prev) => {
+          const next = prev.map((t) => (t.id === optimistic.id ? created : t));
+          saveToCache(user.uid, next);
+          return next;
+        });
       } catch {
-        setTasks((prev) => prev.filter((t) => t.id !== optimistic.id));
+        setTasks((prev) => {
+          const next = prev.filter((t) => t.id !== optimistic.id);
+          saveToCache(user.uid, next);
+          return next;
+        });
         throw new Error('Erro ao criar tarefa.');
       }
     },
@@ -111,15 +163,20 @@ export function useTasks(): UseTasksResult {
   const removeTask = useCallback(
     async (taskId: string) => {
       const snapshot = tasks;
-      setTasks((prev) => prev.filter((t) => t.id !== taskId));
+      setTasks((prev) => {
+        const next = prev.filter((t) => t.id !== taskId);
+        if (user) saveToCache(user.uid, next);
+        return next;
+      });
       try {
         await deleteTask(taskId);
       } catch {
         setTasks(snapshot);
+        if (user) saveToCache(user.uid, snapshot);
         throw new Error('Erro ao remover tarefa.');
       }
     },
-    [tasks],
+    [tasks, user],
   );
 
   const addCompletedPomodoro = useCallback(

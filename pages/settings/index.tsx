@@ -760,22 +760,13 @@ function SettingsContent() {
               Passo {tab + 1} de {STEPS.length}
             </Typography>
 
-            {tab < STEPS.length - 1 ? (
+            {tab < STEPS.length - 1 && (
               <Button
                 variant="contained"
                 onClick={() => setTab((t) => Math.min(STEPS.length - 1, t + 1))}
                 sx={{ borderRadius: 2 }}
               >
                 Próximo →
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                color="success"
-                sx={{ borderRadius: 2 }}
-                disabled
-              >
-                ✅ Concluído
               </Button>
             )}
           </Box>
