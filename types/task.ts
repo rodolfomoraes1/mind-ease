@@ -22,7 +22,6 @@ export interface Task {
   subtasks: Subtask[];
   createdAt: Timestamp | Date;
   dueDate?: Timestamp | Date;
-  /** Posição na coluna para ordenação do Kanban */
   order: number;
 }
 
@@ -34,13 +33,11 @@ export interface PomodoroSession {
   taskId: string;
   startTime: Timestamp | Date;
   endTime?: Timestamp | Date;
-  /** Duração real em minutos */
   duration: number;
   completed: boolean;
   type: 'focus' | 'shortBreak' | 'longBreak';
 }
 
-/** Duração padrão de cada ciclo em minutos */
 export const POMODORO_DURATIONS: Record<PomodoroSession['type'], number> = {
   focus: 25,
   shortBreak: 5,
