@@ -2,8 +2,8 @@ import React from 'react';
 import Head from 'next/head';
 import { Box, Toolbar } from '@mui/material';
 import { AppHeader } from '../../components/shared/AppHeader';
-import { Hero } from './components/Hero';
-import { Footer } from './components/Footer';
+import { Hero } from '../../components/landing/Hero';
+import { Footer } from '../../components/landing/Footer';
 
 export default function Landing() {
   return (

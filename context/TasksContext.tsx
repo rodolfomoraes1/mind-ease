@@ -17,19 +17,11 @@ interface UseTasksResult {
 
 const TasksContext = createContext<UseTasksResult | null>(null);
 
-/**
- * Provider que expõe uma única instância do useTasks para toda a árvore.
- * Evita que TaskOrganizer e TaskBoard tenham estados separados de tasks.
- */
 export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const value = useTasks();
   return <TasksContext.Provider value={value}>{children}</TasksContext.Provider>;
 };
 
-/**
- * Hook para consumir o estado compartilhado de tasks.
- * Deve ser usado dentro de TasksProvider.
- */
 export const useTasksContext = (): UseTasksResult => {
   const ctx = useContext(TasksContext);
   if (!ctx) throw new Error('useTasksContext deve ser usado dentro de TasksProvider');
