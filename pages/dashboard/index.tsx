@@ -12,7 +12,6 @@ import { TasksProvider } from '@/context/TasksContext';
 import { useUserInfo } from '@/hooks/useUserInfo';
 import { useCognitiveFeatures } from '@/hooks/useCognitiveFeatures';
 
-// Lazy loading com code splitting — carregados apenas quando necessário
 const UserInfoCard = dynamic(
   () => import('@/components/dashboard/UserInfoCard').then((m) => ({ default: m.UserInfoCard })),
   { loading: () => <Skeleton variant="rounded" height={120} sx={{ mb: 2, borderRadius: 3 }} /> },
